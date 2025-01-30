@@ -29,23 +29,34 @@ class SqlConnection:
         ) as connection:
             with connection.cursor() as cur:
                 # составление запросов, execute query
-                cur.execute('CREATE TABLE employers('
-                            'vacancy_id int PRIMARY KEY, '
+
+                # таблица для работодателя
+                cur.execute('CREATE TABLE Employers('
+                            'employer_id int PRIMARY KEY, '
                             'name VARCHAR(50),'
                             'alternate_url VARCHAR(255),'
                             'open_vacancies int)')
-                cur.execute('CREATE TABLE vacancies()')
+
+                # таблица для вакансий
+                cur.execute('CREATE TABLE Vacancies('
+                            'employer_id int PRIMARY KEY,'
+                            'vacancy_name VARCHAR(50),'
+                            'salary_from int,'
+                            'salary_to int,'
+                            'vacancy_url,'
+                            'FOREIGN KEY (employer_id) REFERENCES Employers(employer_id))')  # связь с внешним ключем id
 
                 connection.commit()
-                rows = cur.fetchall()
-                cur.execute('DROP TABLE vacancy')
 
-    for row in rows:
-        print(row)
-
-    # закрываем курсор
-    cur.close()
-
-    connection.close()
-
-    # connection.commit()
+    #             rows = cur.fetchall()
+    #             cur.execute('DROP TABLE vacancy')
+    #
+    # for row in rows:
+    #     print(row)
+    #
+    # # закрываем курсор
+    # cur.close()
+    #
+    # connection.close()
+    #
+    # # connection.commit()
