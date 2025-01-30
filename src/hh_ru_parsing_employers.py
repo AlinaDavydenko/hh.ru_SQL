@@ -27,4 +27,14 @@ class Employers(ParsingEmployers):
 
 # url = f"https://api.hh.ru/employers/1122462"
 # data = requests.get(url=url)
-# print(data.json())
+# a_list = list()
+# a_list.append(data.json())
+# print(a_list)
+
+
+a = Employers(employers)
+b = a.get_employers_by_id()
+# print(b)
+for element in b:
+    print(element['description'])
+
