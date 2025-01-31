@@ -12,7 +12,7 @@ class SqlConnection:
     DATABASE = os.getenv('DATABASE')
     USER = os.getenv('USER')
     PASSWORD = os.getenv('PASSWORD')
-    connection: psycopg2
+    connection: psycopg2.extensions.connection
 
     def __init__(self, list_employers: list, list_vacancies: list):
         self.list_employers = list_employers
@@ -28,6 +28,7 @@ class SqlConnection:
             user=cls.USER,
             password=cls.PASSWORD
         )
+        return cls.connection
 
     @classmethod
     def build_tables(cls):
@@ -53,9 +54,8 @@ class SqlConnection:
 
             cls.connection.commit()
 
-    @staticmethod
-    def drop_tables():
-        cur.execute()
+    def drop_tables(self):
+        pass
 
 # заполнить в таблицу данные
 
@@ -71,3 +71,11 @@ class SqlConnection:
     # connection.close()
     #
     # # connection.commit()
+
+
+list1 = []
+list2 = []
+a = SqlConnection(list1, list2)
+a.sql_connection()
+# a.build_tables()
+print(a)
