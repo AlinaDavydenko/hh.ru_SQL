@@ -116,6 +116,10 @@ class SqlConnection:
         # Подтверждаем изменения
         cls.connection.commit()
 
+        # закрываем курсор и соединение
+        cur.close()
+        cls.connection.close()
+
     # # закрываем курсор
     # cur.close()
     #
