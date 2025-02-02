@@ -35,6 +35,6 @@ class Employers(ParsingEmployers):
 a = Employers(employers)
 b = a.get_employers_by_id()
 # print(b)
-for element in b:
-    print(element['description'])
+# for element in b:
+    # print(element['name'], element['id'], element['alternate_url'], element['site_url'])
 

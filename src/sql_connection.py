@@ -5,9 +5,13 @@ import os
 
 from dotenv import load_dotenv
 
+from src.hh_ru_parsing_vacancies import Vacancies
+
+from src.hh_ru_parsing_employers import Employers
+
 
 class SqlConnection:
-    """ подключение к базе данных и добавление элементов в таблицы """
+    """ подключение к базе данных и добавление элементов в таблицы, удаление таблиц """
     load_dotenv()  # Загружаем переменные окружения из файла .env
 
     HOST = os.getenv('HOST')
@@ -17,6 +21,10 @@ class SqlConnection:
 
     # Атрибут для хранения соединения
     connection: psycopg2_connection = None
+
+    # отфильтрованные списки
+    reform_employers: list = list()
+    reform_vacancies: list = list()
 
     def __init__(self, list_employers: list, list_vacancies: list):
         self.list_employers = list_employers
@@ -47,13 +55,12 @@ class SqlConnection:
             cur.execute('''CREATE TABLE Employers(
                         employer_id SERIAL PRIMARY KEY, 
                         name VARCHAR(50),
-                        alternate_url VARCHAR(255),
-                        open_vacancies int)''')
+                        alternate_url VARCHAR(255))''')
 
             # таблица для вакансий
             cur.execute('''CREATE TABLE Vacancies(
-                        employer_id int PRIMARY KEY,
-                        vacancy_name VARCHAR(50),
+                        employer_id int,
+                        vacancy_name VARCHAR(255),
                         salary_from int,
                         salary_to int,
                         vacancy_url VARCHAR(255),
@@ -62,17 +69,53 @@ class SqlConnection:
             # Подтверждаем изменения
             cls.connection.commit()
 
-    def drop_tables(self):
-        pass
+    def data_reform_vacancies(self):
+        """ трансформация данных vacancies """
+        # чистим зарплату от None
+        for elements in self.list_vacancies:
+            for element in elements['items']:
+                if element['salary'] is None:
+                    element['salary'] = {'from': 0, 'to': 0, 'currency': 'RUR', 'gross': False}
+                elif element['salary']['from'] is None:
+                    element['salary']['from'] = 0
+                elif element['salary']['to'] is None:
+                    element['salary']['to'] = 0
+                SqlConnection.reform_vacancies.append(element)
+                SqlConnection.reform_employers = self.list_employers
 
-# заполнить в таблицу данные
+    @staticmethod
+    def add_data_in_tables():
+        """ добавление данных в таблицу """
+        if SqlConnection.connection is None:
+            SqlConnection.sql_connection()  # Устанавливаем соединение, если его нет
 
-    #             rows = cur.fetchall()
-    #             cur.execute('DROP TABLE vacancy')
-    #
-    # for row in rows:
-    #     print(row)
-    #
+        # добавляем данные в employers
+        with SqlConnection.connection.cursor() as cur:
+            for emp in SqlConnection.reform_employers:
+                cur.execute("INSERT INTO employers VALUES (%s, %s, %s)", (emp['id'], emp['name'], emp['alternate_url']))
+            for vac in SqlConnection.reform_vacancies:
+                cur.execute("INSERT INTO vacancies VALUES (%s, %s, %s, %s, %s)",
+                            (vac['employer']['id'], vac['name'], vac['salary']['from'], vac['salary']['to'],
+                             vac['alternate_url']))
+
+        # Подтверждаем изменения
+        SqlConnection.connection.commit()
+
+    @classmethod
+    def drop_tables(cls):
+        """ удаление таблиц """
+        if cls.connection is None:
+            cls.sql_connection()  # Устанавливаем соединение, если его нет
+
+        with cls.connection.cursor() as cur:
+            cur.execute('''
+                DROP TABLE IF EXISTS Vacancies;
+                DROP TABLE IF EXISTS Employers;
+                ''')
+
+        # Подтверждаем изменения
+        cls.connection.commit()
+
     # # закрываем курсор
     # cur.close()
     #
@@ -81,9 +124,15 @@ class SqlConnection:
     # # connection.commit()
 
 
-list1 = []
-list2 = []
-a = SqlConnection(list1, list2)
+a = SqlConnection(Employers.json_employers, Vacancies.json_vacancies)
+
 a.sql_connection()
 # a.build_tables()
-print(a)
+# a.data_reform_vacancies()
+# a.add_data_in_tables()
+
+a.drop_tables()
+# print(a)
+
+
+
