@@ -22,24 +22,3 @@ class Vacancies(ParsingVacancies):
             else:
                 return f'Ошибка {data.status_code}'
         return Vacancies.json_vacancies
-
-
-a = Vacancies(employers)
-list_of_vacancies = a.get_vacancies_by_id()
-
-mylist = list()
-
-for element in list_of_vacancies:
-    # pprint.pprint(element['items'])
-    for i in element['items']:
-        if i['salary'] is None:
-            i['salary'] = {'from': 0, 'to': 0, 'currency': 'RUR', 'gross': False}
-        elif i['salary']['from'] is None:
-            i['salary']['from'] = 0
-        elif i['salary']['to'] is None:
-            i['salary']['to'] = 0
-        # print(i)
-        mylist.append(f"{i['id']} {i['name']} {i['employer']['id']}")
-
-# for inf in mylist:
-#     print(inf)

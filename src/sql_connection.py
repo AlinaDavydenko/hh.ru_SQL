@@ -1,13 +1,10 @@
 import psycopg2
+
 from psycopg2.extensions import connection as psycopg2_connection
 
 import os
 
 from dotenv import load_dotenv
-
-from src.hh_ru_parsing_vacancies import Vacancies
-
-from src.hh_ru_parsing_employers import Employers
 
 
 class SqlConnection:
@@ -54,7 +51,7 @@ class SqlConnection:
             # таблица для работодателя
             cur.execute('''CREATE TABLE Employers(
                         employer_id SERIAL PRIMARY KEY, 
-                        name VARCHAR(50),
+                        employers_name VARCHAR(50),
                         alternate_url VARCHAR(255))''')
 
             # таблица для вакансий
@@ -119,24 +116,3 @@ class SqlConnection:
         # закрываем курсор и соединение
         cur.close()
         cls.connection.close()
-
-    # # закрываем курсор
-    # cur.close()
-    #
-    # connection.close()
-    #
-    # # connection.commit()
-
-
-a = SqlConnection(Employers.json_employers, Vacancies.json_vacancies)
-
-a.sql_connection()
-# a.build_tables()
-# a.data_reform_vacancies()
-# a.add_data_in_tables()
-
-a.drop_tables()
-# print(a)
-
-
-
