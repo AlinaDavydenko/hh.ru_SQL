@@ -1,6 +1,6 @@
 import requests
 
-from abstract_classes import ParsingVacancies
+from src.abstract_classes import ParsingVacancies
 
 from src.settings import employers
 

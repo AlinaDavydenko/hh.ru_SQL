@@ -1,7 +1,7 @@
 # файл для парсинга данных о работодателях
 import requests
 
-from abstract_classes import ParsingEmployers
+from src.abstract_classes import ParsingEmployers
 
 from src.settings import employers
 

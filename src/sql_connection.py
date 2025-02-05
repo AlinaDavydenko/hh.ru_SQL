@@ -23,7 +23,11 @@ class SqlConnection:
     reform_employers: list = list()
     reform_vacancies: list = list()
 
-    def __init__(self, list_employers: list, list_vacancies: list):
+    def __init__(self, database_name, list_employers: list, list_vacancies: list):
+        # название будущей базы данных
+        self.database_name = database_name
+
+        # списки с работодателями и вакансиями
         self.list_employers = list_employers
         self.list_vacancies = list_vacancies
 
@@ -42,9 +46,27 @@ class SqlConnection:
         else:
             return f'Соединение установлено'
 
+    def new_database(self):
+        """ создание новой базы данных """
+        SqlConnection.connection.autocommit = True  # каждая строчка автоматически коммитится
+
+        cur = SqlConnection.connection.cursor()
+
+        # создание базы данных
+        cur.execute(f'''CREATE DATABASE {self.database_name}''')
+
+        SqlConnection.DATABASE = self.database_name
+
+        cur.close()
+        SqlConnection.connection.close()
+
     @classmethod
     def build_tables(cls):
         """ проектирование таблиц """
+        # подключаемся к новой базе данных
+        cls.connection = psycopg2.connect(
+            host=cls.HOST, database=cls.DATABASE, user=cls.DB_USER, password=cls.PASSWORD)
+
         with cls.connection.cursor() as cur:
             # составление запросов, execute query
 
@@ -98,21 +120,35 @@ class SqlConnection:
         # Подтверждаем изменения
         SqlConnection.connection.commit()
 
-    @classmethod
-    def drop_tables(cls):
+    def drop_tables(self):
         """ удаление таблиц """
-        if cls.connection is None:
-            cls.sql_connection()  # Устанавливаем соединение, если его нет
+        if SqlConnection.connection is None:
+            SqlConnection.sql_connection()  # Устанавливаем соединение, если его нет
 
-        with cls.connection.cursor() as cur:
+        with SqlConnection.connection.cursor() as cur:
             cur.execute('''
                 DROP TABLE IF EXISTS Vacancies;
                 DROP TABLE IF EXISTS Employers;
                 ''')
 
         # Подтверждаем изменения
-        cls.connection.commit()
+        SqlConnection.connection.commit()
 
         # закрываем курсор и соединение
         cur.close()
-        cls.connection.close()
+        SqlConnection.connection.close()
+
+    def drop_database(self):
+        """ удаляет базу данных """
+        if SqlConnection.connection is None:
+            SqlConnection.sql_connection()  # Устанавливаем соединение, если его нет
+
+        with SqlConnection.connection.cursor() as cur:
+            cur.execute(f'''DROP DATABASE {self.database_name}''')
+
+            # Подтверждаем изменения
+            SqlConnection.connection.commit()
+
+            # закрываем курсор и соединение
+            cur.close()
+            SqlConnection.connection.close()

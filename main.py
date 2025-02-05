@@ -18,15 +18,22 @@ my_vacancies.get_vacancies_by_id()
 list_vacancies = Vacancies.json_vacancies  # получение списка вакансий
 
 # SQL соединение и заполнение таблиц данными
-sql_tables = SqlConnection(list_employers, list_vacancies)
+sql_tables = SqlConnection('hh_ru_db', list_employers, list_vacancies)
 sql_tables.sql_connection()  # соединение с базой данных
+sql_tables.new_database()  # создание новой базы данных
 sql_tables.build_tables()  # проектирование табличек
 sql_tables.data_reform_vacancies()  # форматирование словаря с зарплатой
 sql_tables.add_data_in_tables()  # добавление данных в таблицы
 
 # класс DB_Manager, выполнение запросов
+methods_vacancies = DBManager('python', SqlConnection.connection)
+
+rows = methods_vacancies.get_all_vacancies()  # получить все данные из таблицы
+for row in rows:
+    print(row)
 
 # удаление таблиц и сброс поиска
 drop_it = input('Начать поиск заново? Предыдущие данные удалятся безвозвратно \n Y/N').lower()
 if drop_it == 'y':
     sql_tables.drop_tables()
+    sql_tables.drop_database()
