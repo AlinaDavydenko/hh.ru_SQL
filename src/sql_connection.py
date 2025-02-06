@@ -120,23 +120,24 @@ class SqlConnection:
         # Подтверждаем изменения
         SqlConnection.connection.commit()
 
-    def drop_tables(self):
+    @classmethod
+    def drop_tables(cls):
         """ удаление таблиц """
-        if SqlConnection.connection is None:
-            SqlConnection.sql_connection()  # Устанавливаем соединение, если его нет
+        if cls.connection is None:
+            cls.sql_connection()  # Устанавливаем соединение, если его нет
 
-        with SqlConnection.connection.cursor() as cur:
+        with cls.connection.cursor() as cur:
             cur.execute('''
                 DROP TABLE IF EXISTS Vacancies;
                 DROP TABLE IF EXISTS Employers;
                 ''')
 
         # Подтверждаем изменения
-        SqlConnection.connection.commit()
+        cls.connection.commit()
 
         # закрываем курсор и соединение
         cur.close()
-        SqlConnection.connection.close()
+        cls.connection.close()
 
     def drop_database(self):
         """ удаляет базу данных """
