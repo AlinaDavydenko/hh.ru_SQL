@@ -34,58 +34,54 @@ class SqlConnection:
     @classmethod
     def sql_connection(cls):
         """ подключение к бд """
-        # подключение к базе данных
-        if cls.connection is None:
+        if cls.connection is None or cls.connection.closed:
             cls.connection = psycopg2.connect(
                 host=cls.HOST,
                 database=cls.DATABASE,
                 user=cls.DB_USER,
                 password=cls.PASSWORD
             )
-            return cls.connection
-        else:
-            return f'Соединение установлено'
+        return cls.connection
 
     def new_database(self):
         """ создание новой базы данных """
-        SqlConnection.connection.autocommit = True  # каждая строчка автоматически коммитится
+        self.connection.autocommit = True  # каждая строчка автоматически коммитится
 
-        cur = SqlConnection.connection.cursor()
+        with self.connection.cursor() as cur:
+            cur.execute(f'''CREATE DATABASE {self.database_name}''')
+            SqlConnection.DATABASE = self.database_name
 
-        # создание базы данных
-        cur.execute(f'''CREATE DATABASE {self.database_name}''')
+            cur.close()
+            SqlConnection.connection.close()
 
-        SqlConnection.DATABASE = self.database_name
-
-        cur.close()
-        SqlConnection.connection.close()
+        SqlConnection.connection = psycopg2.connect(
+            host=SqlConnection.HOST,
+            database=self.database_name,
+            user=SqlConnection.DB_USER,
+            password=SqlConnection.PASSWORD
+        )
 
     @classmethod
     def build_tables(cls):
         """ проектирование таблиц """
-        # подключаемся к новой базе данных
-        cls.connection = psycopg2.connect(
-            host=cls.HOST, database=cls.DATABASE, user=cls.DB_USER, password=cls.PASSWORD)
+        cls.sql_connection()  # Ensure connection is active
 
         with cls.connection.cursor() as cur:
-            # составление запросов, execute query
-
-            # таблица для работодателя
+            cur.execute('DROP TABLE IF EXISTS Vacancies;')
+            cur.execute('DROP TABLE IF EXISTS Employers;')
             cur.execute('''CREATE TABLE Employers(
-                        employer_id SERIAL PRIMARY KEY, 
-                        employers_name VARCHAR(50),
-                        alternate_url VARCHAR(255))''')
+                                employer_id SERIAL PRIMARY KEY, 
+                                employers_name VARCHAR(50),
+                                alternate_url VARCHAR(255))''')
 
-            # таблица для вакансий
             cur.execute('''CREATE TABLE Vacancies(
-                        employer_id int,
-                        vacancy_name VARCHAR(255),
-                        salary_from int,
-                        salary_to int,
-                        vacancy_url VARCHAR(255),
-                        FOREIGN KEY (employer_id) REFERENCES Employers(employer_id))''')  # связь с внешним ключем id
+                                employer_id int,
+                                vacancy_name VARCHAR(255),
+                                salary_from int,
+                                salary_to int,
+                                vacancy_url VARCHAR(255),
+                                FOREIGN KEY (employer_id) REFERENCES Employers(employer_id))''')
 
-            # Подтверждаем изменения
             cls.connection.commit()
 
     def data_reform_vacancies(self):
@@ -105,51 +101,47 @@ class SqlConnection:
     @staticmethod
     def add_data_in_tables():
         """ добавление данных в таблицу """
-        if SqlConnection.connection is None:
-            SqlConnection.sql_connection()  # Устанавливаем соединение, если его нет
+        SqlConnection.sql_connection()  # Ensure connection is active
 
-        # добавляем данные в employers
         with SqlConnection.connection.cursor() as cur:
             for emp in SqlConnection.reform_employers:
-                cur.execute("INSERT INTO employers VALUES (%s, %s, %s)", (emp['id'], emp['name'], emp['alternate_url']))
+                cur.execute("INSERT INTO Employers VALUES (%s, %s, %s)",
+                            (emp['id'], emp['name'], emp['alternate_url']))
             for vac in SqlConnection.reform_vacancies:
-                cur.execute("INSERT INTO vacancies VALUES (%s, %s, %s, %s, %s)",
-                            (vac['employer']['id'], vac['name'], vac['salary']['from'], vac['salary']['to'],
-                             vac['alternate_url']))
+                cur.execute("INSERT INTO Vacancies VALUES (%s, %s, %s, %s, %s)",
+                            (vac['employer']['id'], vac['name'], vac['salary']['from'],
+                             vac['salary']['to'], vac['alternate_url']))
 
-        # Подтверждаем изменения
         SqlConnection.connection.commit()
 
     @classmethod
     def drop_tables(cls):
         """ удаление таблиц """
-        if cls.connection is None:
-            cls.sql_connection()  # Устанавливаем соединение, если его нет
+        SqlConnection.sql_connection()  # Ensure connection is active
 
         with cls.connection.cursor() as cur:
-            cur.execute('''
-                DROP TABLE IF EXISTS Vacancies;
-                DROP TABLE IF EXISTS Employers;
-                ''')
+            cur.execute('DROP TABLE IF EXISTS Vacancies;')
+            cur.execute('DROP TABLE IF EXISTS Employers;')
 
-        # Подтверждаем изменения
         cls.connection.commit()
-
-        # закрываем курсор и соединение
-        cur.close()
-        cls.connection.close()
 
     def drop_database(self):
         """ удаляет базу данных """
-        if SqlConnection.connection is None:
-            SqlConnection.sql_connection()  # Устанавливаем соединение, если его нет
+        SqlConnection.sql_connection()  # Ensure connection is active
 
-        with SqlConnection.connection.cursor() as cur:
+        SqlConnection.connection.close()
+        SqlConnection.connection = psycopg2.connect(
+            host=SqlConnection.HOST,
+            database=os.getenv('DATABASE'),
+            user=SqlConnection.DB_USER,
+            password=SqlConnection.PASSWORD
+        )
+
+        self.connection.autocommit = True
+        with self.connection.cursor() as cur:
             cur.execute(f'''DROP DATABASE {self.database_name}''')
 
-            # Подтверждаем изменения
-            SqlConnection.connection.commit()
-
-            # закрываем курсор и соединение
-            cur.close()
-            SqlConnection.connection.close()
+    def close_connection(self):
+        """ закрываем коннект """
+        if self.connection is not None and not self.connection.closed:
+            self.connection.close()

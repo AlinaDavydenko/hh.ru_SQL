@@ -26,7 +26,7 @@ sql_tables.data_reform_vacancies()  # форматирование словар�
 sql_tables.add_data_in_tables()  # добавление данных в таблицы
 
 # класс DB_Manager, выполнение запросов
-methods_vacancies = DBManager('python', SqlConnection.connection)
+methods_vacancies = DBManager('Python', 'Java', SqlConnection.connection)
 
 rows = methods_vacancies.get_all_vacancies()  # получить все данные из таблицы
 for row in rows:
@@ -37,3 +37,4 @@ drop_it = input('Начать поиск заново? Предыдущие да
 if drop_it == 'y':
     sql_tables.drop_tables()
     sql_tables.drop_database()
+    sql_tables.close_connection()
