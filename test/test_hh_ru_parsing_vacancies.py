@@ -13,7 +13,11 @@ class TestVacancies(unittest.TestCase):
         # Мокируем успешный ответ от API
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"vacancies": [{"id": 12345, "name": "Software Developer"}]}
+        mock_response.json.return_value = {
+            "items": [
+                {"id": 12345, "name": "Software Developer"}
+            ]
+        }
 
         mock_get.return_value = mock_response
 
@@ -31,10 +35,11 @@ class TestVacancies(unittest.TestCase):
 
         # Проверяем, что данные были добавлены в json_vacancies
         self.assertEqual(len(result), 1)  # Должен быть один элемент, так как только один успешный запрос
-        self.assertEqual(result[0], {"vacancies": [{"id": 12345, "name": "Software Developer"}]})
+        self.assertEqual(result[0]['items'][0], {"id": 12345, "name": "Software Developer"})
 
         # Проверка вызова requests.get с правильным URL
-        mock_get.assert_called_with(url='https://api.hh.ru/vacancies/?employer_id=12345')
+        mock_get.assert_any_call(f'https://api.hh.ru/vacancies/?employer_id={employers_dict['company_1']}')
+        mock_get.assert_any_call('https://api.hh.ru/vacancies/?employer_id=67890')
 
     @patch('requests.get')
     def test_get_vacancies_by_id_error(self, mock_get):
