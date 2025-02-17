@@ -13,14 +13,14 @@ class TestEmployers(unittest.TestCase):
         # Мокируем успешный ответ от API
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"id": 12345, "name": "Company A"}
+        mock_response.json.return_value = {"id": 1122462, "name": "Company A"}
 
         mock_get.return_value = mock_response
 
         # Словарь с ID работодателей
         employers_dict = {
-            "company_1": "12345",
-            "company_2": "67890"
+            'Skyeng': 1122462,
+            'T1': 4649269
         }
 
         # Создаем экземпляр класса
@@ -30,11 +30,11 @@ class TestEmployers(unittest.TestCase):
         result = employers_instance.get_employers_by_id()
 
         # Проверяем, что данные были добавлены в json_employers
-        self.assertEqual(len(result), 1)  # Должен быть один элемент, так как только один успешный запрос
-        self.assertEqual(result[0], {"id": 12345, "name": "Company A"})
+        self.assertEqual(len(result), 2)  # Должен быть один элемент, так как только один успешный запрос
+        self.assertEqual(result[0], {"id": 1122462, "name": "Company A"})
 
         # Проверка вызова requests.get с правильным URL
-        mock_get.assert_called_with(url='https://api.hh.ru/employers/12345')
+        mock_get.assert_called_with(url='https://api.hh.ru/employers/4649269')
 
     @patch('requests.get')
     def test_get_employers_by_id_error(self, mock_get):
@@ -48,8 +48,8 @@ class TestEmployers(unittest.TestCase):
 
         # Словарь с ID работодателей
         employers_dict = {
-            "company_1": "12345",
-            "company_2": "67890"
+            'Skyeng': 1122462,
+            'T1': 4649269
         }
 
         # Создаем экземпляр класса
@@ -62,7 +62,7 @@ class TestEmployers(unittest.TestCase):
         self.assertEqual(result, 'Ошибка 404')
 
         # Проверка вызова requests.get с правильным URL
-        mock_get.assert_called_with(url='https://api.hh.ru/employers/12345')
+        mock_get.assert_called_with(url='https://api.hh.ru/employers/1122462')
 
     @patch('requests.get')
     def test_get_employers_by_id_empty_dict(self, mock_get):

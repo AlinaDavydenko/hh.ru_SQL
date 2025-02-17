@@ -6,9 +6,7 @@ class DBManager:
     # Атрибут для хранения соединения
     avg_salary: int = 0
 
-    def __init__(self, word1: str, word2: str, connection: psycopg2_connection):
-        self.word1 = word1
-        self.word2 = word2
+    def __init__(self, connection: psycopg2_connection):
         self.connection = connection
 
     def get_companies_and_vacancies_count(self):
@@ -81,7 +79,7 @@ class DBManager:
             rows = cur.fetchall()
             return rows
 
-    def get_vacancies_with_keyword(self):
+    def get_vacancies_with_keyword(self, word1, word2):
         """ получает список всех вакансий, в названии которых содержатся переданные в метод слова """
         with self.connection.cursor() as cur:
             cur.execute(f'''
@@ -96,8 +94,8 @@ class DBManager:
             JOIN 
                 Employers e ON v.employer_id = e.employer_id
             WHERE 
-                v.vacancy_name ILIKE '%' || '{self.word1}' || '%' 
-                OR v.vacancy_name ILIKE '%' || '{self.word2}' || '%';
+                v.vacancy_name ILIKE '%' || '{word1}' || '%' 
+                OR v.vacancy_name ILIKE '%' || '{word2}' || '%';
             ''')
 
             rows = cur.fetchall()
